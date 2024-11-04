@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Letter Placement Game</title>
+    <script src="https://unpkg.com/kaplay@3001.0.0-alpha.20/dist/kaplay.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+        }
+        #instructions {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="instructions">Drag the letter to the correct line!</div>
+        <script>
+            kaplay({
+                global: true,
+                width: 800,
+                height: 600,
+                scale: 1,
+                debug: true
+            });
+
+            // Load assets (though we'll generate letters dynamically)
+            loadSprite("letter-bg", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==");
+
+            // Define colors for lines
+            const LINE_COLORS = {
+                sky: BLACK,
+                plane: color(150, 150, 150),
+                grass: GREEN,
+                worm: rgb(139, 69, 19)
+            };
+
+            // Define line positions
+            const LINE_POSITIONS = {
+                sky: 100,
+                plane: 200,
+                grass: 300,
+                worm: 400
+            };
+
+            // Function to generate a random lowercase letter
+            function getRandomLetter() {
+                return String.fromCharCode(97 + Math.floor(Math.random() * 26));
+            }
+
+            // Scoring
+            let score = 0;
+
+            // Create the game scene
+            scene("game", () => {
+                // Draw lines
+                Object.keys(LINE_COLORS).forEach((lineName, index) => {
+                    add({
+                        id: `${lineName}-line`,
+                        pos: vec2(50, LINE_POSITIONS[lineName]),
+                        width: width() - 100,
+                        height: 2,
+                        color: LINE_COLORS[lineName],
+                        area: { scale: 1 },
+                        draw() {
+                            drawLine({
+                                p1: vec2(0, 0),
+                                p2: vec2(width() - 100, 0),
+                                width: lineName === 'plane' ? 1 : 3,
+                                color: LINE_COLORS[lineName]
+                            });
+                        },
+                        opacity: lineName === 'plane' ? 0.5 : 1
+                    });
+
+                    // Add line labels
+                    add({
+                        pos: vec2(10, LINE_POSITIONS[lineName]),
+                        text: lineName.charAt(0).toUpperCase() + lineName.slice(1) + " Line",
+                        color: LINE_COLORS[lineName],
+                        scale: 0.5
+                    });
+                });
+
+                // Create sorting boxes
+                const boxWidth = 100;
+                const boxes = [
+                    {
+                        pos: vec2(50, LINE_POSITIONS.sky),
+                        height: LINE_POSITIONS.grass - LINE_POSITIONS.sky,
+                        color: rgb(200, 200, 255, 0.3)
+                    },
+                    {
+                        pos: vec2(width() / 2 - boxWidth / 2, LINE_POSITIONS.plane),
+                        height: LINE_POSITIONS.grass - LINE_POSITIONS.plane,
+                        color: rgb(200, 255, 200, 0.3)
+                    },
+                    {
+                        pos: vec2(width() - 150, LINE_POSITIONS.plane),
+                        height: LINE_POSITIONS.worm - LINE_POSITIONS.plane,
+                        color: rgb(255, 200, 200, 0.3)
+                    }
+                ];
+
+                boxes.forEach((box, index) => {
+                    add({
+                        id: `box-${index}`,
+                        pos: box.pos,
+                        width: boxWidth,
+                        height: box.height,
+                        color: box.color,
+                        area: {},
+                        draw() {
+                            drawRect({
+                                width: boxWidth,
+                                height: box.height,
+                                color: box.color
+                            });
+                        }
+                    });
+                });
+
+                // Generate a letter to drag
+                const currentLetter = add({
+                    text: getRandomLetter(),
+                    pos: vec2(width() / 2, 50),
+                    color: BLACK,
+                    scale: 4,
+                    area: {},
+                    drag: true,
+                    opacity: 1
+                });
+
+                // Score display
+                const scoreText = add({
+                    text: `Score: ${score}`,
+                    pos: vec2(width() - 150, 20),
+                    scale: 0.7
+                });
+
+                // Check letter placement
+                onCollide("letter", "box-0", () => {
+                    score++;
+                    scoreText.text = `Score: ${score}`;
+                    destroy(currentLetter);
+                });
+
+                onCollide("letter", "box-1", () => {
+                    score++;
+                    scoreText.text = `Score: ${score}`;
+                    destroy(currentLetter);
+                });
+
+                onCollide("letter", "box-2", () => {
+                    score++;
+                    scoreText.text = `Score: ${score}`;
+                    destroy(currentLetter);
+                });
+            });
+
+            // Start the game
+            go("game");
+        </script>
+    </div>
+</body>
+</html>
